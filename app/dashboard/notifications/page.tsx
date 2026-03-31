@@ -1,12 +1,9 @@
-import { getSession } from '@/lib/session'
-import { redirect } from 'next/navigation'
 import NotificationsClient from './NotificationsClient'
 import { extensionRequests, brandPlans } from '@/lib/mock-data'
 import { getSubmissions, getResolution } from '@/lib/extension-store'
 
 export default async function NotificationsPage() {
-  const session = await getSession()
-  if (session?.role !== 'finance') redirect('/dashboard')
+  const session = { role: 'finance' as const, name: 'Finance Team' }
 
   // Merge: new store submissions (newest first) + static mock data
   // Apply any resolutions recorded this session to static requests too

@@ -1,12 +1,9 @@
-import { getSession } from '@/lib/session'
-import { redirect } from 'next/navigation'
 import { invoices, payments, extensionRequests, getBrandPlan } from '@/lib/mock-data'
 import { getSubmissions, getResolution } from '@/lib/extension-store'
 import BillingClient from './BillingClient'
 
 export default async function BillingPage() {
-  const session = await getSession()
-  if (!session || session.role !== 'brand') redirect('/dashboard')
+  const session = { role: 'finance' as const, name: 'Finance Team' }
 
   const brand         = session.brand!
   const plan          = getBrandPlan(brand)

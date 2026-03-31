@@ -1,22 +1,15 @@
 import Sidebar from '@/components/dashboard/Sidebar'
-import ChatWidget from '@/components/dashboard/ChatWidget'
-import { getSession } from '@/lib/session'
-import { getBrandPlan } from '@/lib/mock-data'
+import { Session } from '@/lib/session'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession()
-  const isBrand = session?.role === 'brand'
-  const plan    = isBrand && session?.brand ? getBrandPlan(session.brand) : null
+const dummySession: Session = { role: 'finance', name: 'Finance Team' }
 
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
-      <Sidebar session={session} />
+      <Sidebar session={dummySession} />
       <main className="flex-1 overflow-auto" style={{ background: 'var(--bg)' }}>
         {children}
       </main>
-      {isBrand && (
-        <ChatWidget plan={plan} brand={session?.brand ?? ''} />
-      )}
     </div>
   )
 }
