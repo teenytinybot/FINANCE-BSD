@@ -1,5 +1,6 @@
 import { getBrandPlan, formatINR, type PaymentModel, type AccountStatus } from '@/lib/mock-data'
 import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/session'
 import { Wallet, Clock, ShoppingBag, CheckCircle2, Calendar, AlertTriangle, Mail } from 'lucide-react'
 import Link from 'next/link'
 
@@ -31,11 +32,11 @@ const STATUS_META: Record<AccountStatus, { label: string; color: string; bg: str
 }
 
 export default async function PlanPage() {
-  const session: import('@/lib/session').Session = { role: 'finance', name: 'Finance Team' }
+  const session = await getSession()
+  if (!session) redirect('/login')
+  if (session!.role !== 'brand') redirect('/dashboard')
 
-  // Only brand users can see this page
-
-  const brand = session.brand!
+  const brand = session!.brand!
   const plan  = getBrandPlan(brand)
 
   if (!plan) redirect('/dashboard')

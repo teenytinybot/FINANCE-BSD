@@ -1,9 +1,12 @@
+import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/session'
 import InvoicesClient from './InvoicesClient'
 import { invoices, extensionRequests } from '@/lib/mock-data'
 import { getSubmissions, getResolution } from '@/lib/extension-store'
 
 export default async function InvoicesPage() {
-  const session: import('@/lib/session').Session = { role: 'finance', name: 'Finance Team' }
+  const session = await getSession()
+  if (!session) redirect('/login')
   const brand   = session?.role === 'brand' ? session.brand : undefined
   const data    = brand ? invoices.filter(i => i.client === brand) : invoices
 
