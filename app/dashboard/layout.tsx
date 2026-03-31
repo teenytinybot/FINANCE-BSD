@@ -1,12 +1,14 @@
+import { redirect } from 'next/navigation'
 import Sidebar from '@/components/dashboard/Sidebar'
-import { Session } from '@/lib/session'
+import { getSession } from '@/lib/session'
 
-const dummySession: Session = { role: 'finance', name: 'Finance Team' }
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession()
+  if (!session) redirect('/login')
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
-      <Sidebar session={dummySession} />
+      <Sidebar session={session} />
       <main className="flex-1 overflow-auto" style={{ background: 'var(--bg)' }}>
         {children}
       </main>
