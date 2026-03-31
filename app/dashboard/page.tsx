@@ -356,7 +356,7 @@ function BrandOverview({ brand, name, received, outstanding, overdue, recentInvo
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default async function DashboardPage() {
-  const session = { role: 'finance' as const, name: 'Finance Team' }
+  const session: import('@/lib/session').Session = { role: 'finance', name: 'Finance Team' }
   const brand   = session?.role === 'brand' ? session.brand : undefined
   const isBrand = !!brand
 

@@ -3,7 +3,7 @@ import { getSubmissions, getResolution } from '@/lib/extension-store'
 import BillingClient from './BillingClient'
 
 export default async function BillingPage() {
-  const session = { role: 'finance' as const, name: 'Finance Team' }
+  const session: import('@/lib/session').Session = { role: 'finance', name: 'Finance Team' }
 
   const brand         = session.brand!
   const plan          = getBrandPlan(brand)

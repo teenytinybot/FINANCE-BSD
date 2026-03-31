@@ -31,7 +31,7 @@ const STATUS_META: Record<AccountStatus, { label: string; color: string; bg: str
 }
 
 export default async function PlanPage() {
-  const session = { role: 'finance' as const, name: 'Finance Team' }
+  const session: import('@/lib/session').Session = { role: 'finance', name: 'Finance Team' }
 
   // Only brand users can see this page
 
