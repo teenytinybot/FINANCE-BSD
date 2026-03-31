@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+:root {
+  /* ── BitSpeed brand palette ── */
+  --bs-black:   #000000;
+  --bs-white:   #FFFFFF;
+
+  /* ── Violet accent system (Puzzle-inspired) ── */
+  --violet:       #6366F1;
+  --violet-dark:  #4338CA;
+  --violet-light: #EEF2FF;
+  --violet-mid:   #C7D2FE;
+  --navy:         #0D1B3E;
+
+  /* ── Surface & layout ── */
+  --bg:         #F8F8FC;   /* very slight violet tint on page bg */
+  --surface:    #FFFFFF;
+  --border:     #E5E7EB;   /* lighter, cleaner */
+  --border-dark:#C7D2FE;   /* violet-tinted border for emphasis */
+  --text:       #111111;
+  --muted:      #6B7280;
+  --subtle:     #9CA3AF;
+
+  --black: #000000;
+  --white: #FFFFFF;
+
+  /* ── Status colors ── */
+  --green:    #16A34A;
+  --green-bg: #F0FDF4;
+  --amber:    #D97706;
+  --amber-bg: #FFFBEB;
+  --red:      #DC2626;
+  --red-bg:   #FEF2F2;
+  --blue:     #2563EB;
+  --blue-bg:  #EFF6FF;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--violet-mid); border-radius: 99px; }
+
+/* ── Status badges ── */
+.badge-paid    { background: var(--green-bg); color: var(--green);  border: 1px solid #BBF7D0; }
+.badge-pending { background: var(--amber-bg); color: var(--amber);  border: 1px solid #FDE68A; }
+.badge-overdue { background: var(--red-bg);   color: var(--red);    border: 1px solid #FECACA; }
+.badge-prepaid { background: var(--blue-bg);  color: var(--blue);   border: 1px solid #BFDBFE; }
+
+/* ── Table row hover — light violet ── */
+tr.row-hover:hover td { background: #F5F3FF; }
+
+/* ── Card hover ── */
+.card-interactive {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.card-interactive:hover {
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.10);
+  border-color: var(--violet-mid) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Fade up animation ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.45s ease forwards; }
+
+/* ── Flow connector line ── */
+.flow-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -1.5rem;
+  width: 1.5rem;
+  height: 1px;
+  background: var(--border-dark);
+}
+
+/* ── Input focus ring ── */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--violet) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* ── Marquee (landing page) ── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}

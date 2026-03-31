@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/bitespeed/.claude/**)",
+      "Read(//Users/bitespeed/.claude/plugins/**)",
+      "Bash(python3 -m json.tool)"
+    ]
+  }
+}
