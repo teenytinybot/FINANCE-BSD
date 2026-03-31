@@ -1,8 +1,9 @@
 import { getBrandPlan, formatINR, type PaymentModel, type AccountStatus } from '@/lib/mock-data'
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
-import { Wallet, Clock, ShoppingBag, CheckCircle2, Calendar, AlertTriangle, Mail } from 'lucide-react'
+import { Wallet, Clock, ShoppingBag, CheckCircle2, Calendar, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
+import ContactFinanceModal from '@/components/dashboard/ContactFinanceModal'
 
 const MODEL_META: Record<PaymentModel, { label: string; tag: string; icon: React.ReactNode; description: string }> = {
   prepaid: {
@@ -168,11 +169,7 @@ export default async function PlanPage() {
           <p className="text-white text-sm font-semibold">Questions about your plan?</p>
           <p className="text-xs mt-0.5" style={{ color: '#9CA3AF' }}>Reach out to the BitSpeed finance team</p>
         </div>
-        <a href="mailto:finance@bitespeed.co"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-zinc-100"
-          style={{ background: '#fff', color: '#000' }}>
-          <Mail size={14} /> Contact Finance
-        </a>
+        <ContactFinanceModal />
       </div>
     </div>
   )
