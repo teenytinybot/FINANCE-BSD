@@ -1,15 +1,705 @@
-import Script from 'next/script'
+'use client'
 
-export const metadata = {
-  title: 'Bitespeed — Turn Every Visitor Into a Loyal Customer',
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import {
+  ArrowRight, CheckCircle2, Clock, AlertTriangle,
+  CreditCard, Wallet, ShoppingBag, FileText,
+  BarChart3, Bell, Download,
+  Zap, Shield, TrendingUp, GitMerge, Users,
+  ChevronRight,
+} from 'lucide-react'
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
+const V   = '#6366F1'
+const VD  = '#4338CA'
+const VL  = '#EEF2FF'
+const N   = '#0D1B3E'
+const VLL = '#F5F3FF'
+
+// ── Orbital card data ─────────────────────────────────────────────────────────
+const innerOrbit = [
+  { name: 'Invoices',     category: 'Finance',      color: '#6366F1', icon: '📊' },
+  { name: 'WhatsApp',     category: 'Messaging',     color: '#25D366', icon: '💬' },
+  { name: 'Payments',     category: 'Banking',       color: '#3B82F6', icon: '💳' },
+  { name: 'Shopify',      category: 'E-commerce',    color: '#96BF48', icon: '🛍️' },
+  { name: 'Reconcile',    category: 'Automation',    color: '#0EA5E9', icon: '🔄' },
+  { name: 'AR Aging',     category: 'Analytics',     color: '#F59E0B', icon: '📈' },
+]
+
+const outerOrbit = [
+  { name: 'Razorpay',     category: 'Payments',      color: '#3395FF', icon: '💰' },
+  { name: 'Email',        category: 'Communication', color: '#EA4335', icon: '📧' },
+  { name: 'Ledger',       category: 'Accounting',    color: '#7C3AED', icon: '📦' },
+  { name: 'GST',          category: 'Compliance',    color: '#DC2626', icon: '📋' },
+  { name: 'Alerts',       category: 'Notifications', color: '#FB923C', icon: '🔔' },
+  { name: 'SMS',          category: 'Messaging',     color: '#EC4899', icon: '📱' },
+  { name: 'Automation',   category: 'AI',            color: '#10B981', icon: '🤖' },
+  { name: 'TDS',          category: 'Compliance',    color: '#64748B', icon: '🗂️' },
+]
+
+// ── Page sections data ────────────────────────────────────────────────────────
+const brandLogos = [
+  'Mamaearth', 'Meesho', 'Lenskart', 'NykaaFashion', 'Blinkit',
+  'GlobalBees', 'The Good Glamm', 'Purplle', 'Delhivery', 'Vedix',
+  'Wow Momo', 'Zoko', 'ShopEasy', 'Acme Corp',
+]
+
+const steps = [
+  { n: '01', title: 'Brand Onboarding',   icon: <Users size={16} />,      desc: 'Brand signs up and selects a payment model. Finance configures credit cycle, GST, legal name, and bank details.' },
+  { n: '02', title: 'Usage Tracking',     icon: <BarChart3 size={16} />,  desc: 'Platform usage tracked in real-time — WhatsApp, email, SMS, voice, AI — metered continuously per brand.' },
+  { n: '03', title: 'Invoice Generation', icon: <FileText size={16} />,   desc: "Invoice auto-generated at cycle end and dispatched to the brand's email. Downloadable immediately from the dashboard." },
+  { n: '04', title: 'Payment & UTR',      icon: <CreditCard size={16} />, desc: 'Brand pays via preferred method and submits UTR on the dashboard. Extension requests can be raised with a reason.' },
+  { n: '05', title: 'Reconciliation',     icon: <GitMerge size={16} />,   desc: 'Finance uploads bank statement, auto-matches by reference, manually links gaps. TDS uploaded quarterly, receipts issued.' },
+  { n: '06', title: 'Account Status',     icon: <Bell size={16} />,       desc: 'Account stays active within the credit cycle. Overdue accounts get automated reminders before suspension triggers.' },
+]
+
+const paymentModels = [
+  {
+    icon: <Wallet size={20} />,
+    model: 'Prepaid',
+    tag: 'Wallet-based',
+    color: V,
+    description: 'Load wallet credits in advance. Usage deducted in real-time. Auto-pause at zero — no surprise suspensions.',
+    highlights: ['Wallet balance on dashboard', 'Auto-pause at zero balance', 'Instant recharge, any method', 'Receipts downloadable anytime'],
+  },
+  {
+    icon: <Clock size={20} />,
+    model: 'Postpaid',
+    tag: 'Invoice-based',
+    color: '#0EA5E9',
+    description: 'Use now, pay later. Invoiced at end of billing cycle within the credit window configured by finance.',
+    highlights: ['Invoice at cycle end', 'Finance-configured credit cycle', 'Extension requestable with reason', 'Grace period before suspension'],
+  },
+  {
+    icon: <ShoppingBag size={20} />,
+    model: 'Shopify',
+    tag: 'App billing',
+    color: '#10B981',
+    description: "Billed through Shopify's native billing. Charges appear on your Shopify invoice — zero manual action needed.",
+    highlights: ['Billed via Shopify API', 'On your Shopify invoice', 'No manual payment needed', 'Managed via Shopify admin'],
+  },
+]
+
+const features = [
+  { icon: <Zap size={16} />,        title: 'Real-time Usage Tracking',  desc: 'Every message, call, and AI interaction metered the moment it happens — no manual counting.' },
+  { icon: <Shield size={16} />,     title: 'Role-based Access',         desc: 'Finance team sees all brands. Brand POCs see only their own invoices and payment history.' },
+  { icon: <GitMerge size={16} />,   title: 'Bank Reconciliation',       desc: 'Upload bank statements, auto-match by reference, spot and resolve gaps in one view.' },
+  { icon: <Bell size={16} />,       title: 'Smart Notifications',       desc: 'Automated reminders, extension workflows, suspension alerts, and daily finance reports.' },
+  { icon: <TrendingUp size={16} />, title: 'AR Aging Reports',          desc: '5-bucket aging analysis — current, 1–30, 31–60, 61–90, 90+ days — filterable by brand.' },
+  { icon: <Download size={16} />,   title: 'Ledger & PDF Export',       desc: 'Download full payment ledgers, individual invoices, or filtered aging reports as CSV or PDF.' },
+]
+
+const policies = [
+  { icon: <AlertTriangle size={14} />, title: 'Suspension Policy',      color: '#F59E0B', bg: '#FFFBEB', body: 'Accounts overdue beyond the agreed credit cycle receive automated reminders. Suspension triggers only after the grace period — services resume immediately on payment.' },
+  { icon: <Clock size={14} />,         title: 'Payment Date Extension', color: V,         bg: VL,        body: 'Brands can request a due-date extension from the dashboard with a written reason. Finance team is notified instantly and can approve or reject with a note.' },
+  { icon: <Download size={14} />,      title: 'TDS & Compliance',       color: '#10B981', bg: '#F0FDF4', body: 'Quarterly TDS certificates must be uploaded via the dashboard. All compliance documents stored securely and accessible to the finance team anytime.' },
+]
+
+// ── Hooks ─────────────────────────────────────────────────────────────────────
+function useFadeIn(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setVisible(true); obs.disconnect() }
+    }, { threshold })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [threshold])
+  return { ref, visible }
 }
 
-export default function Home() {
+function FadeIn({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const { ref, visible } = useFadeIn()
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n\n    :root {\n      --bg: #06060A;\n      --surface: #0D0D15;\n      --surface-2: #131320;\n      --border: rgba(255,255,255,0.07);\n      --accent: #C8FF00;\n      --accent-dim: rgba(200,255,0,0.12);\n      --accent-mid: rgba(200,255,0,0.5);\n      --pink: #FF4ECD;\n      --cyan: #00D4FF;\n      --text: #F0F0F5;\n      --muted: #6B6B80;\n      --muted-2: #9999AA;\n      --radius: 16px;\n      --radius-sm: 10px;\n    }\n\n    html { scroll-behavior: smooth; }\n\n    body {\n      background: var(--bg);\n      color: var(--text);\n      font-family: \'DM Sans\', sans-serif;\n      font-size: 16px;\n      line-height: 1.6;\n      overflow-x: hidden;\n      cursor: none;\n    }\n\n    /* Custom cursor */\n    .cursor {\n      position: fixed;\n      width: 10px; height: 10px;\n      background: var(--accent);\n      border-radius: 50%;\n      pointer-events: none;\n      z-index: 9999;\n      transform: translate(-50%, -50%);\n      transition: transform 0.1s, width 0.2s, height 0.2s, background 0.2s;\n      mix-blend-mode: difference;\n    }\n    .cursor-ring {\n      position: fixed;\n      width: 36px; height: 36px;\n      border: 1.5px solid rgba(200,255,0,0.5);\n      border-radius: 50%;\n      pointer-events: none;\n      z-index: 9998;\n      transform: translate(-50%, -50%);\n      transition: transform 0.15s ease-out, width 0.3s, height 0.3s;\n    }\n\n    /* Noise overlay */\n    body::before {\n      content: \'\';\n      position: fixed;\n      inset: 0;\n      background-image: url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'1\'/%3E%3C/svg%3E");\n      opacity: 0.03;\n      pointer-events: none;\n      z-index: 0;\n    }\n\n    /* Grid bg */\n    .grid-bg {\n      position: fixed;\n      inset: 0;\n      background-image:\n        linear-gradient(var(--border) 1px, transparent 1px),\n        linear-gradient(90deg, var(--border) 1px, transparent 1px);\n      background-size: 60px 60px;\n      pointer-events: none;\n      z-index: 0;\n      mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 30%, transparent 100%);\n    }\n\n    /* NAV */\n    nav {\n      position: fixed;\n      top: 0; left: 0; right: 0;\n      z-index: 100;\n      display: flex;\n      align-items: center;\n      justify-content: space-between;\n      padding: 20px 48px;\n      background: rgba(6,6,10,0.8);\n      backdrop-filter: blur(20px);\n      border-bottom: 1px solid var(--border);\n    }\n\n    .nav-logo {\n      display: flex;\n      align-items: center;\n      gap: 10px;\n      font-family: \'Syne\', sans-serif;\n      font-weight: 800;\n      font-size: 1.3rem;\n      letter-spacing: -0.02em;\n      color: var(--text);\n      text-decoration: none;\n    }\n\n    .logo-mark {\n      width: 32px; height: 32px;\n      background: var(--accent);\n      border-radius: 8px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n    }\n    .logo-mark svg { width: 18px; height: 18px; }\n\n    .nav-links {\n      display: flex;\n      align-items: center;\n      gap: 36px;\n      list-style: none;\n    }\n    .nav-links a {\n      color: var(--muted-2);\n      text-decoration: none;\n      font-size: 0.9rem;\n      font-weight: 400;\n      transition: color 0.2s;\n    }\n    .nav-links a:hover { color: var(--text); }\n\n    .nav-actions {\n      display: flex;\n      align-items: center;\n      gap: 12px;\n    }\n\n    .btn {\n      display: inline-flex;\n      align-items: center;\n      gap: 8px;\n      padding: 10px 22px;\n      border-radius: 100px;\n      font-family: \'DM Sans\', sans-serif;\n      font-size: 0.875rem;\n      font-weight: 500;\n      cursor: none;\n      text-decoration: none;\n      transition: all 0.2s;\n      border: none;\n    }\n    .btn-ghost {\n      background: transparent;\n      color: var(--muted-2);\n      border: 1px solid var(--border);\n    }\n    .btn-ghost:hover {\n      border-color: rgba(255,255,255,0.2);\n      color: var(--text);\n    }\n    .btn-primary {\n      background: var(--accent);\n      color: #06060A;\n      font-weight: 600;\n    }\n    .btn-primary:hover {\n      background: #D8FF20;\n      transform: translateY(-1px);\n      box-shadow: 0 8px 32px rgba(200,255,0,0.3);\n    }\n    .btn-large {\n      padding: 14px 32px;\n      font-size: 1rem;\n      border-radius: 100px;\n    }\n\n    /* SECTIONS */\n    section { position: relative; z-index: 1; }\n\n    /* HERO */\n    .hero {\n      min-height: 100vh;\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      justify-content: center;\n      text-align: center;\n      padding: 140px 24px 80px;\n      position: relative;\n    }\n\n    .hero-glow {\n      position: absolute;\n      top: 10%;\n      left: 50%;\n      transform: translateX(-50%);\n      width: 700px;\n      height: 400px;\n      background: radial-gradient(ellipse, rgba(200,255,0,0.12) 0%, transparent 70%);\n      pointer-events: none;\n    }\n\n    .hero-badge {\n      display: inline-flex;\n      align-items: center;\n      gap: 8px;\n      padding: 6px 16px 6px 8px;\n      background: var(--accent-dim);\n      border: 1px solid rgba(200,255,0,0.2);\n      border-radius: 100px;\n      font-size: 0.8rem;\n      color: var(--accent);\n      font-weight: 500;\n      margin-bottom: 40px;\n      animation: fadeUp 0.6s ease both;\n    }\n\n    .badge-dot {\n      width: 6px; height: 6px;\n      background: var(--accent);\n      border-radius: 50%;\n      animation: pulse 2s infinite;\n    }\n\n    @keyframes pulse {\n      0%, 100% { opacity: 1; transform: scale(1); }\n      50% { opacity: 0.5; transform: scale(1.5); }\n    }\n\n    .hero h1 {\n      font-family: \'Syne\', sans-serif;\n      font-size: clamp(3rem, 8vw, 7rem);\n      font-weight: 800;\n      line-height: 0.95;\n      letter-spacing: -0.03em;\n      max-width: 900px;\n      animation: fadeUp 0.6s 0.1s ease both;\n    }\n\n    .hero h1 em {\n      font-style: normal;\n      color: var(--accent);\n      position: relative;\n    }\n\n    .hero-sub {\n      margin-top: 28px;\n      font-size: clamp(1rem, 2vw, 1.2rem);\n      color: var(--muted-2);\n      max-width: 560px;\n      line-height: 1.7;\n      font-weight: 300;\n      animation: fadeUp 0.6s 0.2s ease both;\n    }\n\n    .hero-actions {\n      display: flex;\n      align-items: center;\n      gap: 12px;\n      margin-top: 44px;\n      flex-wrap: wrap;\n      justify-content: center;\n      animation: fadeUp 0.6s 0.3s ease both;\n    }\n\n    .hero-social-proof {\n      margin-top: 56px;\n      display: flex;\n      align-items: center;\n      gap: 16px;\n      animation: fadeUp 0.6s 0.4s ease both;\n    }\n\n    .avatars {\n      display: flex;\n    }\n    .avatar {\n      width: 34px; height: 34px;\n      border-radius: 50%;\n      border: 2px solid var(--bg);\n      margin-left: -8px;\n      background: var(--surface-2);\n      overflow: hidden;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 0.7rem;\n      font-weight: 600;\n    }\n    .avatar:first-child { margin-left: 0; }\n    .avatar-1 { background: linear-gradient(135deg, #667eea, #764ba2); }\n    .avatar-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }\n    .avatar-3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }\n    .avatar-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }\n\n    .social-text {\n      font-size: 0.85rem;\n      color: var(--muted-2);\n    }\n    .social-text strong {\n      color: var(--text);\n      font-weight: 500;\n    }\n\n    /* STATS TICKER */\n    .stats-bar {\n      padding: 20px 48px;\n      border-top: 1px solid var(--border);\n      border-bottom: 1px solid var(--border);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      gap: 0;\n      overflow: hidden;\n      background: var(--surface);\n    }\n\n    .stat-item {\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      padding: 12px 60px;\n      border-right: 1px solid var(--border);\n      position: relative;\n    }\n    .stat-item:last-child { border-right: none; }\n\n    .stat-num {\n      font-family: \'Syne\', sans-serif;\n      font-size: 2.2rem;\n      font-weight: 800;\n      color: var(--accent);\n      letter-spacing: -0.03em;\n      font-variant-numeric: tabular-nums;\n    }\n\n    .stat-label {\n      font-size: 0.78rem;\n      color: var(--muted);\n      text-transform: uppercase;\n      letter-spacing: 0.1em;\n      margin-top: 2px;\n    }\n\n    /* CHANNELS */\n    .channels {\n      padding: 100px 48px;\n    }\n\n    .section-label {\n      font-size: 0.75rem;\n      text-transform: uppercase;\n      letter-spacing: 0.15em;\n      color: var(--accent);\n      font-weight: 600;\n      margin-bottom: 16px;\n      display: flex;\n      align-items: center;\n      gap: 8px;\n    }\n    .section-label::before {\n      content: \'\';\n      display: block;\n      width: 20px;\n      height: 1px;\n      background: var(--accent);\n    }\n\n    .section-title {\n      font-family: \'Syne\', sans-serif;\n      font-size: clamp(2rem, 4vw, 3.2rem);\n      font-weight: 800;\n      letter-spacing: -0.03em;\n      line-height: 1.1;\n      max-width: 700px;\n    }\n\n    .section-desc {\n      margin-top: 16px;\n      font-size: 1.05rem;\n      color: var(--muted-2);\n      max-width: 540px;\n      line-height: 1.7;\n      font-weight: 300;\n    }\n\n    .section-header {\n      max-width: 1200px;\n      margin: 0 auto 64px;\n    }\n\n    .channels-grid {\n      max-width: 1200px;\n      margin: 0 auto;\n      display: grid;\n      grid-template-columns: repeat(4, 1fr);\n      gap: 16px;\n    }\n\n    .channel-card {\n      background: var(--surface);\n      border: 1px solid var(--border);\n      border-radius: var(--radius);\n      padding: 32px 28px;\n      transition: all 0.3s;\n      position: relative;\n      overflow: hidden;\n    }\n\n    .channel-card::before {\n      content: \'\';\n      position: absolute;\n      inset: 0;\n      opacity: 0;\n      transition: opacity 0.3s;\n      border-radius: inherit;\n    }\n\n    .channel-card.whatsapp::before { background: radial-gradient(circle at 0% 0%, rgba(37,211,102,0.12), transparent 60%); }\n    .channel-card.email::before { background: radial-gradient(circle at 0% 0%, rgba(66,133,244,0.12), transparent 60%); }\n    .channel-card.sms::before { background: radial-gradient(circle at 0% 0%, rgba(255,78,205,0.12), transparent 60%); }\n    .channel-card.push::before { background: radial-gradient(circle at 0% 0%, rgba(0,212,255,0.12), transparent 60%); }\n\n    .channel-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); }\n    .channel-card:hover::before { opacity: 1; }\n\n    .channel-icon {\n      width: 48px; height: 48px;\n      border-radius: 12px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 1.5rem;\n      margin-bottom: 20px;\n    }\n    .channel-icon.wa { background: rgba(37,211,102,0.15); }\n    .channel-icon.em { background: rgba(66,133,244,0.15); }\n    .channel-icon.sm { background: rgba(255,78,205,0.15); }\n    .channel-icon.pu { background: rgba(0,212,255,0.15); }\n\n    .channel-name {\n      font-family: \'Syne\', sans-serif;\n      font-size: 1.2rem;\n      font-weight: 700;\n      margin-bottom: 8px;\n    }\n\n    .channel-desc {\n      font-size: 0.9rem;\n      color: var(--muted-2);\n      line-height: 1.6;\n    }\n\n    .channel-stat {\n      margin-top: 20px;\n      display: inline-flex;\n      align-items: center;\n      gap: 6px;\n      padding: 4px 10px;\n      border-radius: 6px;\n      font-size: 0.78rem;\n      font-family: \'Syne Mono\', monospace;\n      font-weight: 600;\n    }\n    .channel-stat.green { background: rgba(37,211,102,0.12); color: #25D366; }\n    .channel-stat.blue { background: rgba(66,133,244,0.12); color: #4285F4; }\n    .channel-stat.pink { background: rgba(255,78,205,0.12); color: #FF4ECD; }\n    .channel-stat.cyan { background: rgba(0,212,255,0.12); color: #00D4FF; }\n\n    /* FEATURES */\n    .features {\n      padding: 100px 48px;\n      background: var(--surface);\n      border-top: 1px solid var(--border);\n      border-bottom: 1px solid var(--border);\n    }\n\n    .features-inner {\n      max-width: 1200px;\n      margin: 0 auto;\n    }\n\n    .features-layout {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 80px;\n      align-items: center;\n      margin-top: 64px;\n    }\n\n    .feature-preview {\n      background: var(--bg);\n      border: 1px solid var(--border);\n      border-radius: var(--radius);\n      padding: 28px;\n      position: relative;\n      overflow: hidden;\n    }\n\n    .preview-header {\n      display: flex;\n      align-items: center;\n      gap: 8px;\n      margin-bottom: 20px;\n    }\n    .preview-dot {\n      width: 10px; height: 10px;\n      border-radius: 50%;\n    }\n    .pd-red { background: #FF5F56; }\n    .pd-yellow { background: #FFBD2E; }\n    .pd-green { background: #27C93F; }\n\n    .preview-title {\n      font-size: 0.8rem;\n      color: var(--muted);\n      margin-left: 8px;\n    }\n\n    /* Cart recovery demo */\n    .cart-flow {\n      display: flex;\n      flex-direction: column;\n      gap: 12px;\n    }\n\n    .cart-msg {\n      display: flex;\n      gap: 10px;\n      align-items: flex-start;\n    }\n\n    .cart-avatar {\n      width: 32px; height: 32px;\n      border-radius: 50%;\n      flex-shrink: 0;\n      background: linear-gradient(135deg, #25D366, #128C7E);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 0.7rem;\n    }\n\n    .cart-bubble {\n      background: var(--surface-2);\n      border-radius: 4px 12px 12px 12px;\n      padding: 12px 14px;\n      font-size: 0.85rem;\n      line-height: 1.5;\n      max-width: 260px;\n      border: 1px solid var(--border);\n    }\n\n    .cart-bubble strong { color: var(--accent); }\n\n    .cart-reply {\n      align-self: flex-end;\n    }\n    .cart-reply .cart-bubble {\n      background: rgba(200,255,0,0.1);\n      border-color: rgba(200,255,0,0.2);\n      border-radius: 12px 4px 12px 12px;\n      color: var(--accent);\n    }\n\n    .typing-indicator {\n      display: flex;\n      gap: 4px;\n      align-items: center;\n      padding: 10px 14px;\n      background: var(--surface-2);\n      border-radius: 4px 12px 12px 12px;\n      border: 1px solid var(--border);\n      width: fit-content;\n    }\n    .typing-dot {\n      width: 6px; height: 6px;\n      border-radius: 50%;\n      background: var(--muted);\n      animation: typingBounce 1.4s infinite;\n    }\n    .typing-dot:nth-child(2) { animation-delay: 0.2s; }\n    .typing-dot:nth-child(3) { animation-delay: 0.4s; }\n\n    @keyframes typingBounce {\n      0%, 60%, 100% { transform: translateY(0); }\n      30% { transform: translateY(-6px); }\n    }\n\n    .recovery-badge {\n      display: inline-flex;\n      align-items: center;\n      gap: 6px;\n      padding: 6px 12px;\n      background: rgba(200,255,0,0.1);\n      border: 1px solid rgba(200,255,0,0.2);\n      border-radius: 8px;\n      font-size: 0.78rem;\n      color: var(--accent);\n      margin-top: 12px;\n      font-family: \'Syne Mono\', monospace;\n    }\n\n    .feature-list {\n      list-style: none;\n      display: flex;\n      flex-direction: column;\n      gap: 24px;\n    }\n\n    .feature-item {\n      display: flex;\n      gap: 16px;\n      align-items: flex-start;\n    }\n\n    .feature-icon-sm {\n      width: 40px; height: 40px;\n      border-radius: 10px;\n      background: var(--accent-dim);\n      border: 1px solid rgba(200,255,0,0.2);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      flex-shrink: 0;\n      font-size: 1rem;\n    }\n\n    .feature-text h3 {\n      font-family: \'Syne\', sans-serif;\n      font-size: 1.05rem;\n      font-weight: 700;\n      margin-bottom: 4px;\n    }\n    .feature-text p {\n      font-size: 0.9rem;\n      color: var(--muted-2);\n      line-height: 1.6;\n    }\n\n    /* HOW IT WORKS */\n    .how {\n      padding: 100px 48px;\n    }\n\n    .steps {\n      max-width: 1200px;\n      margin: 64px auto 0;\n      display: grid;\n      grid-template-columns: repeat(3, 1fr);\n      gap: 2px;\n      background: var(--border);\n      border-radius: var(--radius);\n      overflow: hidden;\n    }\n\n    .step {\n      background: var(--bg);\n      padding: 48px 40px;\n      position: relative;\n    }\n\n    .step-num {\n      font-family: \'Syne\', sans-serif;\n      font-size: 5rem;\n      font-weight: 800;\n      color: rgba(255,255,255,0.04);\n      line-height: 1;\n      letter-spacing: -0.05em;\n      margin-bottom: 8px;\n      position: absolute;\n      top: 24px;\n      right: 28px;\n    }\n\n    .step-icon {\n      font-size: 2rem;\n      margin-bottom: 16px;\n      display: block;\n    }\n\n    .step h3 {\n      font-family: \'Syne\', sans-serif;\n      font-size: 1.3rem;\n      font-weight: 700;\n      margin-bottom: 12px;\n    }\n\n    .step p {\n      font-size: 0.9rem;\n      color: var(--muted-2);\n      line-height: 1.7;\n    }\n\n    /* INTEGRATIONS */\n    .integrations {\n      padding: 80px 48px;\n      border-top: 1px solid var(--border);\n      background: var(--surface);\n      text-align: center;\n    }\n\n    .integration-logos {\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      gap: 0;\n      flex-wrap: wrap;\n      margin-top: 48px;\n    }\n\n    .int-logo {\n      padding: 16px 36px;\n      border: 1px solid var(--border);\n      margin: -0.5px;\n      font-size: 0.9rem;\n      font-weight: 600;\n      color: var(--muted);\n      transition: all 0.2s;\n      display: flex;\n      align-items: center;\n      gap: 8px;\n    }\n    .int-logo:hover { color: var(--text); background: var(--surface-2); }\n    .int-logo .int-icon { font-size: 1.2rem; }\n\n    /* TESTIMONIALS */\n    .testimonials {\n      padding: 100px 48px;\n    }\n\n    .testimonials-grid {\n      max-width: 1200px;\n      margin: 64px auto 0;\n      display: grid;\n      grid-template-columns: repeat(3, 1fr);\n      gap: 16px;\n    }\n\n    .testimonial-card {\n      background: var(--surface);\n      border: 1px solid var(--border);\n      border-radius: var(--radius);\n      padding: 32px;\n      transition: border-color 0.2s;\n    }\n    .testimonial-card:hover { border-color: rgba(255,255,255,0.15); }\n\n    .stars {\n      color: var(--accent);\n      font-size: 0.9rem;\n      letter-spacing: 2px;\n      margin-bottom: 16px;\n    }\n\n    .testimonial-text {\n      font-size: 0.95rem;\n      color: var(--muted-2);\n      line-height: 1.7;\n      font-style: italic;\n      margin-bottom: 24px;\n      font-weight: 300;\n    }\n\n    .testimonial-author {\n      display: flex;\n      align-items: center;\n      gap: 12px;\n    }\n\n    .author-avatar {\n      width: 36px; height: 36px;\n      border-radius: 50%;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 0.8rem;\n      font-weight: 700;\n      flex-shrink: 0;\n    }\n\n    .author-info h4 {\n      font-size: 0.9rem;\n      font-weight: 600;\n    }\n    .author-info p {\n      font-size: 0.8rem;\n      color: var(--muted);\n    }\n\n    /* PRICING */\n    .pricing {\n      padding: 100px 48px;\n      background: var(--surface);\n      border-top: 1px solid var(--border);\n    }\n\n    .pricing-inner {\n      max-width: 1000px;\n      margin: 0 auto;\n    }\n\n    .pricing-header {\n      text-align: center;\n      margin-bottom: 64px;\n    }\n\n    .pricing-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr 1fr;\n      gap: 16px;\n    }\n\n    .pricing-card {\n      background: var(--bg);\n      border: 1px solid var(--border);\n      border-radius: var(--radius);\n      padding: 36px 32px;\n      position: relative;\n      transition: all 0.2s;\n    }\n\n    .pricing-card.featured {\n      border-color: var(--accent);\n      background: rgba(200,255,0,0.04);\n    }\n\n    .featured-badge {\n      position: absolute;\n      top: -12px;\n      left: 50%;\n      transform: translateX(-50%);\n      background: var(--accent);\n      color: #06060A;\n      font-size: 0.72rem;\n      font-weight: 700;\n      padding: 4px 14px;\n      border-radius: 100px;\n      letter-spacing: 0.05em;\n      text-transform: uppercase;\n      white-space: nowrap;\n    }\n\n    .plan-name {\n      font-family: \'Syne\', sans-serif;\n      font-size: 1.1rem;\n      font-weight: 700;\n      margin-bottom: 8px;\n    }\n\n    .plan-desc {\n      font-size: 0.85rem;\n      color: var(--muted);\n      margin-bottom: 28px;\n    }\n\n    .plan-price {\n      margin-bottom: 28px;\n    }\n\n    .price-amount {\n      font-family: \'Syne\', sans-serif;\n      font-size: 3rem;\n      font-weight: 800;\n      letter-spacing: -0.04em;\n      line-height: 1;\n    }\n    .price-currency {\n      font-size: 1.5rem;\n      vertical-align: top;\n      line-height: 1.5;\n    }\n    .price-period {\n      font-size: 0.85rem;\n      color: var(--muted);\n    }\n\n    .plan-features {\n      list-style: none;\n      display: flex;\n      flex-direction: column;\n      gap: 12px;\n      margin-bottom: 32px;\n    }\n    .plan-features li {\n      display: flex;\n      align-items: center;\n      gap: 10px;\n      font-size: 0.88rem;\n      color: var(--muted-2);\n    }\n    .plan-features li::before {\n      content: \'✓\';\n      width: 18px; height: 18px;\n      border-radius: 50%;\n      background: var(--accent-dim);\n      color: var(--accent);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 0.7rem;\n      flex-shrink: 0;\n    }\n\n    .plan-cta {\n      display: block;\n      text-align: center;\n      padding: 12px;\n      border-radius: 100px;\n      font-weight: 600;\n      font-size: 0.9rem;\n      text-decoration: none;\n      transition: all 0.2s;\n    }\n    .plan-cta-outline {\n      border: 1px solid var(--border);\n      color: var(--muted-2);\n    }\n    .plan-cta-outline:hover {\n      border-color: rgba(255,255,255,0.2);\n      color: var(--text);\n    }\n    .plan-cta-filled {\n      background: var(--accent);\n      color: #06060A;\n    }\n    .plan-cta-filled:hover {\n      background: #D8FF20;\n      box-shadow: 0 8px 32px rgba(200,255,0,0.25);\n    }\n\n    /* CTA SECTION */\n    .cta-section {\n      padding: 120px 48px;\n      text-align: center;\n      position: relative;\n      overflow: hidden;\n    }\n\n    .cta-glow {\n      position: absolute;\n      bottom: -100px;\n      left: 50%;\n      transform: translateX(-50%);\n      width: 600px;\n      height: 400px;\n      background: radial-gradient(ellipse, rgba(200,255,0,0.1) 0%, transparent 70%);\n      pointer-events: none;\n    }\n\n    .cta-section h2 {\n      font-family: \'Syne\', sans-serif;\n      font-size: clamp(2.5rem, 6vw, 5rem);\n      font-weight: 800;\n      letter-spacing: -0.03em;\n      line-height: 1.0;\n      max-width: 700px;\n      margin: 0 auto 24px;\n    }\n\n    .cta-section p {\n      font-size: 1.1rem;\n      color: var(--muted-2);\n      max-width: 480px;\n      margin: 0 auto 44px;\n      font-weight: 300;\n    }\n\n    /* FOOTER */\n    footer {\n      padding: 48px;\n      border-top: 1px solid var(--border);\n      background: var(--surface);\n    }\n\n    .footer-inner {\n      max-width: 1200px;\n      margin: 0 auto;\n      display: flex;\n      align-items: center;\n      justify-content: space-between;\n    }\n\n    .footer-left {\n      display: flex;\n      align-items: center;\n      gap: 32px;\n    }\n\n    .footer-links {\n      display: flex;\n      gap: 24px;\n    }\n    .footer-links a {\n      font-size: 0.85rem;\n      color: var(--muted);\n      text-decoration: none;\n      transition: color 0.2s;\n    }\n    .footer-links a:hover { color: var(--muted-2); }\n\n    .footer-copy {\n      font-size: 0.82rem;\n      color: var(--muted);\n    }\n\n    /* ANIMATIONS */\n    @keyframes fadeUp {\n      from { opacity: 0; transform: translateY(24px); }\n      to { opacity: 1; transform: translateY(0); }\n    }\n\n    .reveal {\n      opacity: 0;\n      transform: translateY(30px);\n      transition: opacity 0.6s ease, transform 0.6s ease;\n    }\n    .reveal.visible {\n      opacity: 1;\n      transform: translateY(0);\n    }\n\n    /* Scrolling ticker */\n    .ticker-section {\n      overflow: hidden;\n      padding: 20px 0;\n      border-top: 1px solid var(--border);\n      border-bottom: 1px solid var(--border);\n      background: var(--surface);\n    }\n\n    .ticker-track {\n      display: flex;\n      gap: 0;\n      animation: ticker 30s linear infinite;\n      width: max-content;\n    }\n\n    .ticker-item {\n      display: flex;\n      align-items: center;\n      gap: 16px;\n      padding: 0 40px;\n      white-space: nowrap;\n      font-size: 0.85rem;\n      color: var(--muted);\n      border-right: 1px solid var(--border);\n    }\n    .ticker-item span.hi { color: var(--accent); font-family: \'Syne Mono\', monospace; font-weight: 600; }\n\n    @keyframes ticker {\n      from { transform: translateX(0); }\n      to { transform: translateX(-50%); }\n    }\n\n    /* mobile */\n    @media (max-width: 900px) {\n      nav { padding: 16px 24px; }\n      .nav-links { display: none; }\n      .channels-grid { grid-template-columns: 1fr 1fr; }\n      .features-layout { grid-template-columns: 1fr; gap: 40px; }\n      .steps { grid-template-columns: 1fr; }\n      .testimonials-grid { grid-template-columns: 1fr; }\n      .pricing-grid { grid-template-columns: 1fr; }\n      .stats-bar { flex-wrap: wrap; }\n      .stat-item { border-right: none; border-bottom: 1px solid var(--border); width: 50%; }\n      .footer-inner { flex-direction: column; gap: 24px; text-align: center; }\n    }\n\n    @media (max-width: 600px) {\n      .channels-grid { grid-template-columns: 1fr; }\n      .hero { padding: 120px 20px 60px; }\n      .channels, .features, .how, .pricing, .cta-section { padding: 60px 20px; }\n    }' }} />
-      <div dangerouslySetInnerHTML={{ __html: '<!-- Cursor -->\n  <div class="cursor" id="cursor"></div>\n  <div class="cursor-ring" id="cursorRing"></div>\n\n  <!-- Grid background -->\n  <div class="grid-bg"></div>\n\n  <!-- NAV -->\n  <nav>\n    <a href="#" class="nav-logo">\n      <div class="logo-mark">\n        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\n          <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" fill="#06060A" stroke="#06060A" stroke-width="0.5"/>\n          <path d="M8 12L11 15L16 9" stroke="#C8FF00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n        </svg>\n      </div>\n      Bitespeed\n    </a>\n    <ul class="nav-links">\n      <li><a href="#channels">Channels</a></li>\n      <li><a href="#features">Features</a></li>\n      <li><a href="#how">How it works</a></li>\n      <li><a href="#pricing">Pricing</a></li>\n    </ul>\n    <div class="nav-actions">\n      <a href="#" class="btn btn-ghost">Sign in</a>\n      <a href="#" class="btn btn-primary">Start free →</a>\n    </div>\n  </nav>\n\n  <!-- HERO -->\n  <section class="hero">\n    <div class="hero-glow"></div>\n\n    <div class="hero-badge">\n      <span class="badge-dot"></span>\n      Trusted by 3,000+ Shopify stores\n    </div>\n\n    <h1>\n      Every customer.<br/>\n      <em>Every channel.</em><br/>\n      Just Bitespeed.\n    </h1>\n\n    <p class="hero-sub">\n      Recover abandoned carts, run personalized campaigns, and automate customer engagement across WhatsApp, Email, SMS — all from one platform.\n    </p>\n\n    <div class="hero-actions">\n      <a href="#" class="btn btn-primary btn-large">Get started free →</a>\n      <a href="#" class="btn btn-ghost btn-large">See how it works</a>\n    </div>\n\n    <div class="hero-social-proof">\n      <div class="avatars">\n        <div class="avatar avatar-1">R</div>\n        <div class="avatar avatar-2">K</div>\n        <div class="avatar avatar-3">A</div>\n        <div class="avatar avatar-4">M</div>\n      </div>\n      <div class="social-text">\n        <strong>3,200+ brands</strong> recovering revenue with Bitespeed\n      </div>\n    </div>\n  </section>\n\n  <!-- STATS BAR -->\n  <div class="stats-bar">\n    <div class="stat-item">\n      <div class="stat-num" data-target="47">0</div>\n      <div class="stat-label">Avg. Cart Recovery Rate</div>\n    </div>\n    <div class="stat-item">\n      <div class="stat-num" data-target="12" data-prefix="$" data-suffix="M+">$0</div>\n      <div class="stat-label">Revenue Recovered</div>\n    </div>\n    <div class="stat-item">\n      <div class="stat-num" data-target="3200" data-suffix="+">0</div>\n      <div class="stat-label">Active Brands</div>\n    </div>\n    <div class="stat-item">\n      <div class="stat-num" data-target="4.9" data-suffix="★">0</div>\n      <div class="stat-label">App Store Rating</div>\n    </div>\n  </div>\n\n  <!-- TICKER -->\n  <div class="ticker-section">\n    <div class="ticker-track">\n      <div class="ticker-item">🛒 Cart recovered · <span class="hi">+₹4,200</span></div>\n      <div class="ticker-item">📱 WhatsApp open rate · <span class="hi">94%</span></div>\n      <div class="ticker-item">🔁 Repeat purchase triggered · <span class="hi">+₹8,900</span></div>\n      <div class="ticker-item">💌 Email campaign sent · <span class="hi">12,500 recipients</span></div>\n      <div class="ticker-item">⚡ Automation fired · <span class="hi">0.3s</span></div>\n      <div class="ticker-item">🎯 Conversion rate lift · <span class="hi">+23%</span></div>\n      <div class="ticker-item">🛒 Cart recovered · <span class="hi">+₹4,200</span></div>\n      <div class="ticker-item">📱 WhatsApp open rate · <span class="hi">94%</span></div>\n      <div class="ticker-item">🔁 Repeat purchase triggered · <span class="hi">+₹8,900</span></div>\n      <div class="ticker-item">💌 Email campaign sent · <span class="hi">12,500 recipients</span></div>\n      <div class="ticker-item">⚡ Automation fired · <span class="hi">0.3s</span></div>\n      <div class="ticker-item">🎯 Conversion rate lift · <span class="hi">+23%</span></div>\n    </div>\n  </div>\n\n  <!-- CHANNELS -->\n  <section class="channels" id="channels">\n    <div class="section-header reveal">\n      <div class="section-label">Channels</div>\n      <h2 class="section-title">Reach customers where they actually are</h2>\n      <p class="section-desc">One platform to manage all your customer touchpoints — no juggling ten tools anymore.</p>\n    </div>\n\n    <div class="channels-grid">\n      <div class="channel-card whatsapp reveal">\n        <div class="channel-icon wa">💬</div>\n        <div class="channel-name">WhatsApp</div>\n        <div class="channel-desc">Send cart recovery, order updates, and promotions through the most-opened channel on the planet.</div>\n        <div class="channel-stat green">↑ 94% open rate</div>\n      </div>\n      <div class="channel-card email reveal" style="transition-delay:0.1s">\n        <div class="channel-icon em">✉️</div>\n        <div class="channel-name">Email</div>\n        <div class="channel-desc">Beautiful, personalized email flows for every stage of the customer lifecycle — from welcome to win-back.</div>\n        <div class="channel-stat blue">↑ 38% avg CTR</div>\n      </div>\n      <div class="channel-card sms reveal" style="transition-delay:0.2s">\n        <div class="channel-icon sm">📲</div>\n        <div class="channel-name">SMS</div>\n        <div class="channel-desc">Reach your customers instantly with targeted SMS messages that cut through the noise.</div>\n        <div class="channel-stat pink">↑ 82% open rate</div>\n      </div>\n      <div class="channel-card push reveal" style="transition-delay:0.3s">\n        <div class="channel-icon pu">🔔</div>\n        <div class="channel-name">Push Notifications</div>\n        <div class="channel-desc">Re-engage visitors who left without buying with timely, personalized browser push notifications.</div>\n        <div class="channel-stat cyan">↑ 3.5x click rate</div>\n      </div>\n    </div>\n  </section>\n\n  <!-- FEATURES -->\n  <section class="features" id="features">\n    <div class="features-inner">\n      <div class="section-header reveal">\n        <div class="section-label">Features</div>\n        <h2 class="section-title">Built to recover revenue on autopilot</h2>\n        <p class="section-desc">Smart automations that work while you sleep — and a dashboard that shows you exactly what\'s working.</p>\n      </div>\n\n      <div class="features-layout">\n        <!-- Preview: WhatsApp cart recovery -->\n        <div class="feature-preview reveal">\n          <div class="preview-header">\n            <div class="preview-dot pd-red"></div>\n            <div class="preview-dot pd-yellow"></div>\n            <div class="preview-dot pd-green"></div>\n            <span class="preview-title">Cart Recovery · WhatsApp</span>\n          </div>\n          <div class="cart-flow">\n            <div class="cart-msg">\n              <div class="cart-avatar">🤖</div>\n              <div class="cart-bubble">\n                Hey Priya! 👋 You left something in your cart.<br/><br/>\n                <strong>Nike Air Max — ₹8,499</strong> is still waiting for you.<br/><br/>\n                Grab it before it sells out →\n              </div>\n            </div>\n            <div class="cart-msg cart-reply">\n              <div class="cart-bubble">Still available?</div>\n            </div>\n            <div class="cart-msg">\n              <div class="cart-avatar">🤖</div>\n              <div class="cart-bubble">\n                Yes! 🎉 And here\'s <strong>10% off</strong> just for you: <strong>PRIYA10</strong><br/>\n                Expires in 2 hours ⏰\n              </div>\n            </div>\n            <div class="cart-msg">\n              <div class="typing-indicator">\n                <div class="typing-dot"></div>\n                <div class="typing-dot"></div>\n                <div class="typing-dot"></div>\n              </div>\n            </div>\n            <div class="recovery-badge">\n              ✓ Cart recovered · +₹8,499\n            </div>\n          </div>\n        </div>\n\n        <ul class="feature-list">\n          <li class="feature-item reveal">\n            <div class="feature-icon-sm">🎯</div>\n            <div class="feature-text">\n              <h3>Smart Cart Recovery</h3>\n              <p>Automatically trigger personalized recovery messages across WhatsApp, Email, and SMS with AI-crafted copy that converts.</p>\n            </div>\n          </li>\n          <li class="feature-item reveal" style="transition-delay:0.1s">\n            <div class="feature-icon-sm">🤖</div>\n            <div class="feature-text">\n              <h3>AI-Powered Personalization</h3>\n              <p>Segment customers by behavior, purchase history, and location. Send the right message to the right person at the right time.</p>\n            </div>\n          </li>\n          <li class="feature-item reveal" style="transition-delay:0.2s">\n            <div class="feature-icon-sm">⚡</div>\n            <div class="feature-text">\n              <h3>One-Click Flows</h3>\n              <p>Pre-built automation flows for abandoned cart, post-purchase, win-back, and upsell. Launch in minutes, not days.</p>\n            </div>\n          </li>\n          <li class="feature-item reveal" style="transition-delay:0.3s">\n            <div class="feature-icon-sm">📊</div>\n            <div class="feature-text">\n              <h3>Revenue Attribution</h3>\n              <p>See exactly which campaigns are driving revenue. Every rupee tracked back to the message that converted.</p>\n            </div>\n          </li>\n        </ul>\n      </div>\n    </div>\n  </section>\n\n  <!-- HOW IT WORKS -->\n  <section class="how" id="how">\n    <div class="section-header reveal" style="max-width:1200px;margin:0 auto 64px;">\n      <div class="section-label">How it works</div>\n      <h2 class="section-title">Up and running in under 5 minutes</h2>\n    </div>\n\n    <div class="steps">\n      <div class="step reveal">\n        <div class="step-num">01</div>\n        <span class="step-icon">🔌</span>\n        <h3>Connect your store</h3>\n        <p>One-click install on Shopify or WooCommerce. Bitespeed syncs your products, customers, and orders instantly.</p>\n      </div>\n      <div class="step reveal" style="transition-delay:0.1s">\n        <div class="step-num">02</div>\n        <span class="step-icon">⚡</span>\n        <h3>Pick your automations</h3>\n        <p>Choose from 30+ pre-built flows or build your own. Set triggers, delays, and channel sequences in a drag-and-drop editor.</p>\n      </div>\n      <div class="step reveal" style="transition-delay:0.2s">\n        <div class="step-num">03</div>\n        <span class="step-icon">📈</span>\n        <h3>Watch revenue grow</h3>\n        <p>Bitespeed runs 24/7 recovering carts, re-engaging customers, and driving repeat purchases — you just watch the dashboard.</p>\n      </div>\n    </div>\n  </section>\n\n  <!-- INTEGRATIONS -->\n  <div class="integrations reveal">\n    <div class="section-label" style="justify-content:center;">Integrations</div>\n    <h3 class="section-title" style="font-size:1.5rem;text-align:center;margin:0 auto;">Works with your existing stack</h3>\n    <div class="integration-logos">\n      <div class="int-logo"><span class="int-icon">🛍️</span> Shopify</div>\n      <div class="int-logo"><span class="int-icon">🛒</span> WooCommerce</div>\n      <div class="int-logo"><span class="int-icon">💬</span> WhatsApp Business</div>\n      <div class="int-logo"><span class="int-icon">📧</span> Klaviyo</div>\n      <div class="int-logo"><span class="int-icon">📊</span> Google Analytics</div>\n      <div class="int-logo"><span class="int-icon">🚀</span> Meta Ads</div>\n      <div class="int-logo"><span class="int-icon">💳</span> Razorpay</div>\n      <div class="int-logo"><span class="int-icon">📦</span> Shiprocket</div>\n    </div>\n  </div>\n\n  <!-- TESTIMONIALS -->\n  <section class="testimonials">\n    <div class="section-header reveal" style="max-width:1200px;margin:0 auto 64px;">\n      <div class="section-label">Reviews</div>\n      <h2 class="section-title">Brands that switched never looked back</h2>\n    </div>\n\n    <div class="testimonials-grid">\n      <div class="testimonial-card reveal">\n        <div class="stars">★★★★★</div>\n        <p class="testimonial-text">"We recovered ₹23 lakhs in the first month alone. The WhatsApp cart recovery flow is genuinely magic — 52% recovery rate on abandoned carts."</p>\n        <div class="testimonial-author">\n          <div class="author-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2)">RK</div>\n          <div class="author-info">\n            <h4>Rahul Kapoor</h4>\n            <p>Founder, ThreadCo — 12K orders/mo</p>\n          </div>\n        </div>\n      </div>\n      <div class="testimonial-card reveal" style="transition-delay:0.1s">\n        <div class="stars">★★★★★</div>\n        <p class="testimonial-text">"Replaced 4 tools with Bitespeed. Setup took 20 minutes and we were seeing recovered carts within the hour. The ROI dashboard is chef\'s kiss."</p>\n        <div class="testimonial-author">\n          <div class="author-avatar" style="background:linear-gradient(135deg,#f093fb,#f5576c)">AS</div>\n          <div class="author-info">\n            <h4>Ananya Shah</h4>\n            <p>Co-founder, GlowLab Skincare</p>\n          </div>\n        </div>\n      </div>\n      <div class="testimonial-card reveal" style="transition-delay:0.2s">\n        <div class="stars">★★★★★</div>\n        <p class="testimonial-text">"Our repeat purchase rate went from 18% to 34% in 60 days. The post-purchase WhatsApp sequence is unreal. Bitespeed is non-negotiable for D2C."</p>\n        <div class="testimonial-author">\n          <div class="author-avatar" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">VM</div>\n          <div class="author-info">\n            <h4>Vikram Mehta</h4>\n            <p>CEO, Bolt Nutrition</p>\n          </div>\n        </div>\n      </div>\n    </div>\n  </section>\n\n  <!-- PRICING -->\n  <section class="pricing" id="pricing">\n    <div class="pricing-inner">\n      <div class="pricing-header reveal">\n        <div class="section-label" style="justify-content:center;">Pricing</div>\n        <h2 class="section-title" style="text-align:center;margin:0 auto 12px;">Simple, usage-based pricing</h2>\n        <p class="section-desc" style="text-align:center;margin:0 auto;">Start free, scale as you grow. No setup fees. No annual lock-in.</p>\n      </div>\n\n      <div class="pricing-grid">\n        <div class="pricing-card reveal">\n          <div class="plan-name">Starter</div>\n          <div class="plan-desc">For brands just getting started</div>\n          <div class="plan-price">\n            <span class="price-currency">₹</span>\n            <span class="price-amount">0</span>\n            <div class="price-period">/month · up to ₹50K revenue tracked</div>\n          </div>\n          <ul class="plan-features">\n            <li>500 WhatsApp messages/mo</li>\n            <li>Cart recovery flows</li>\n            <li>Basic analytics</li>\n            <li>Shopify integration</li>\n            <li>Email support</li>\n          </ul>\n          <a href="#" class="plan-cta plan-cta-outline">Get started free</a>\n        </div>\n\n        <div class="pricing-card featured reveal" style="transition-delay:0.1s">\n          <div class="featured-badge">Most Popular</div>\n          <div class="plan-name">Growth</div>\n          <div class="plan-desc">For scaling D2C brands</div>\n          <div class="plan-price">\n            <span class="price-currency">₹</span>\n            <span class="price-amount" style="color:var(--accent)">4,999</span>\n            <div class="price-period">/month · unlimited revenue tracking</div>\n          </div>\n          <ul class="plan-features">\n            <li>10,000 WhatsApp messages/mo</li>\n            <li>All channels (Email + SMS + Push)</li>\n            <li>AI personalization</li>\n            <li>Revenue attribution dashboard</li>\n            <li>30+ automation flows</li>\n            <li>Priority support</li>\n          </ul>\n          <a href="#" class="plan-cta plan-cta-filled">Start 14-day trial →</a>\n        </div>\n\n        <div class="pricing-card reveal" style="transition-delay:0.2s">\n          <div class="plan-name">Enterprise</div>\n          <div class="plan-desc">For large-scale operations</div>\n          <div class="plan-price">\n            <span class="price-amount" style="font-size:2rem">Custom</span>\n            <div class="price-period">pricing · volume discounts</div>\n          </div>\n          <ul class="plan-features">\n            <li>Unlimited messages</li>\n            <li>Dedicated account manager</li>\n            <li>Custom integrations</li>\n            <li>SLA guarantee</li>\n            <li>On-call support</li>\n            <li>White-label option</li>\n          </ul>\n          <a href="#" class="plan-cta plan-cta-outline">Talk to sales →</a>\n        </div>\n      </div>\n    </div>\n  </section>\n\n  <!-- CTA -->\n  <section class="cta-section">\n    <div class="cta-glow"></div>\n    <h2 class="reveal">Stop losing <em style="color:var(--accent)">revenue</em> to abandoned carts</h2>\n    <p class="reveal">Join 3,200+ brands using Bitespeed to recover lost sales and build loyal customers — automatically.</p>\n    <div class="reveal">\n      <a href="#" class="btn btn-primary btn-large">Start recovering revenue free →</a>\n    </div>\n  </section>\n\n  <!-- FOOTER -->\n  <footer>\n    <div class="footer-inner">\n      <div class="footer-left">\n        <a href="#" class="nav-logo">\n          <div class="logo-mark">\n            <svg viewBox="0 0 24 24" fill="none">\n              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" fill="#06060A" stroke="#06060A" stroke-width="0.5"/>\n              <path d="M8 12L11 15L16 9" stroke="#C8FF00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n            </svg>\n          </div>\n          Bitespeed\n        </a>\n        <div class="footer-links">\n          <a href="#">Privacy</a>\n          <a href="#">Terms</a>\n          <a href="#">Docs</a>\n          <a href="#">Blog</a>\n          <a href="#">Careers</a>\n        </div>\n      </div>\n      <div class="footer-copy">© 2025 Bitespeed. All rights reserved.</div>\n    </div>\n  </footer>' }} />
-      <Script src="/landing-scripts.js" strategy="afterInteractive" />
-    </>
+    <div ref={ref} className={className} style={{
+      opacity:    visible ? 1 : 0,
+      transform:  visible ? 'translateY(0)' : 'translateY(22px)',
+      transition: `opacity 0.55s ease ${delay}s, transform 0.55s ease ${delay}s`,
+    }}>
+      {children}
+    </div>
+  )
+}
+
+// ── Shared UI ─────────────────────────────────────────────────────────────────
+function Pill({ children, color = V }: { children: React.ReactNode; color?: string }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '4px 12px', borderRadius: 100,
+      background: color + '18', color, border: `1px solid ${color}30`,
+      fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+    }}>
+      {children}
+    </span>
+  )
+}
+
+function ArrowBtn({ href, children, variant = 'dark' }: { href: string; children: React.ReactNode; variant?: 'dark' | 'outline' | 'violet' | 'accent' }) {
+  const [hov, setHov] = useState(false)
+  const styles: Record<string, React.CSSProperties> = {
+    dark:    { background: '#fff',                    color: '#0D1B3E', border: 'none' },
+    outline: { background: 'rgba(255,255,255,0.08)',  color: '#fff',    border: '1px solid rgba(255,255,255,0.18)' },
+    violet:  { background: V,                         color: '#fff',    border: 'none' },
+    accent:  { background: V,                         color: '#fff',    border: 'none', padding: '14px 36px', fontSize: 16, borderRadius: 100 },
+  }
+  return (
+    <Link href={href}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        padding: '11px 24px', borderRadius: 12,
+        fontWeight: 600, fontSize: 14, textDecoration: 'none',
+        transition: 'all 0.22s ease',
+        boxShadow: hov ? '0 8px 28px rgba(0,0,0,0.25)' : 'none',
+        transform: hov ? 'translateY(-1px)' : 'none',
+        ...styles[variant],
+      }}
+    >
+      {children}
+      <ArrowRight size={14} style={{ transform: hov ? 'translateX(4px)' : 'translateX(0)', transition: 'transform 0.22s ease' }} />
+    </Link>
+  )
+}
+
+// ── Orbital card ──────────────────────────────────────────────────────────────
+function OrbCard({ card }: { card: { name: string; category: string; color: string; icon: string } }) {
+  return (
+    <div style={{
+      background: 'rgba(20, 22, 40, 0.85)',
+      border: '1px solid rgba(255,255,255,0.09)',
+      borderRadius: 14,
+      padding: '12px 14px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      minWidth: 118,
+      backdropFilter: 'blur(12px)',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+      userSelect: 'none',
+    }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: 10,
+        background: card.color + '22',
+        border: `1px solid ${card.color}30`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 20,
+      }}>
+        {card.icon}
+      </div>
+      <div>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#F0F0F5', lineHeight: 1.2 }}>{card.name}</p>
+        <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.32)', marginTop: 2, letterSpacing: '0.02em' }}>{card.category}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+export default function Home() {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    function onScroll() { setScrolled(window.scrollY > 64) }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const innerPeriod = 24  // seconds for one full inner orbit
+  const outerPeriod = 42  // seconds for one full outer orbit
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#fff', color: '#111', fontFamily: 'Geist, DM Sans, system-ui, sans-serif' }}>
+
+      {/* ── Nav ─────────────────────────────────────────────────────────── */}
+      <header style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        transition: 'all 0.3s ease',
+        background:     scrolled ? 'rgba(255,255,255,0.9)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(16px)'            : 'none',
+        borderBottom:   scrolled ? '1px solid rgba(0,0,0,0.08)' : '1px solid transparent',
+        boxShadow:      scrolled ? '0 1px 20px rgba(0,0,0,0.05)' : 'none',
+      }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: scrolled ? N : 'rgba(255,255,255,0.15)', border: scrolled ? 'none' : '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}>
+              <span style={{ fontSize: 11, fontWeight: 900, color: '#fff' }}>B</span>
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 500, color: scrolled ? N : '#fff', transition: 'color 0.3s' }}>
+              bite<strong>speed</strong>
+              <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 400, color: scrolled ? '#9CA3AF' : 'rgba(255,255,255,0.4)' }}>Finance</span>
+            </span>
+          </div>
+
+          <nav style={{ display: 'flex', gap: 32 }}>
+            {[
+              { label: 'How it works',   href: '#how-it-works' },
+              { label: 'Payment models', href: '#payment-models' },
+              { label: 'Features',       href: '#features' },
+            ].map(({ label, href }) => (
+              <a key={label} href={href} style={{
+                fontSize: 13, fontWeight: 500, textDecoration: 'none',
+                color: scrolled ? '#6B7280' : 'rgba(255,255,255,0.58)',
+                transition: 'color 0.2s',
+              }}>
+                {label}
+              </a>
+            ))}
+          </nav>
+
+          <ArrowBtn href="/login" variant={scrolled ? 'violet' : 'outline'}>Sign in</ArrowBtn>
+        </div>
+      </header>
+
+      {/* ── Hero: wrrk.ai-style orbital ─────────────────────────────────── */}
+      <section style={{
+        position: 'relative',
+        minHeight: '100vh',
+        background: '#0A0C18',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+      }}>
+
+        {/* CSS keyframe animations */}
+        <style>{`
+          @keyframes orbitCW {
+            from { transform: rotate(0deg) translateX(270px); }
+            to   { transform: rotate(360deg) translateX(270px); }
+          }
+          @keyframes counterCW {
+            from { transform: translateY(-50%) rotate(0deg); }
+            to   { transform: translateY(-50%) rotate(-360deg); }
+          }
+          @keyframes orbitCCW {
+            from { transform: rotate(0deg) translateX(430px); }
+            to   { transform: rotate(-360deg) translateX(430px); }
+          }
+          @keyframes counterCCW {
+            from { transform: translateY(-50%) rotate(0deg); }
+            to   { transform: translateY(-50%) rotate(360deg); }
+          }
+          @keyframes heroFadeIn {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+
+        {/* Subtle radial glow behind center text */}
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 600, height: 400,
+          background: 'radial-gradient(ellipse, rgba(99,102,241,0.18) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Grid overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.025,
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)',
+          backgroundSize: '52px 52px',
+          pointerEvents: 'none',
+        }} />
+
+        {/* ── Inner orbit (CW, 6 cards) ── */}
+        {innerOrbit.map((card, i) => {
+          const delay = -((innerPeriod / innerOrbit.length) * i)
+          return (
+            <div key={`in-${i}`} style={{
+              position: 'absolute', top: '50%', left: '50%',
+              width: 0, height: 0,
+              animation: `orbitCW ${innerPeriod}s linear infinite`,
+              animationDelay: `${delay}s`,
+            }}>
+              <div style={{
+                position: 'absolute',
+                animation: `counterCW ${innerPeriod}s linear infinite`,
+                animationDelay: `${delay}s`,
+              }}>
+                <OrbCard card={card} />
+              </div>
+            </div>
+          )
+        })}
+
+        {/* ── Outer orbit (CCW, 8 cards) ── */}
+        {outerOrbit.map((card, i) => {
+          const delay = -((outerPeriod / outerOrbit.length) * i)
+          return (
+            <div key={`out-${i}`} style={{
+              position: 'absolute', top: '50%', left: '50%',
+              width: 0, height: 0,
+              animation: `orbitCCW ${outerPeriod}s linear infinite`,
+              animationDelay: `${delay}s`,
+            }}>
+              <div style={{
+                position: 'absolute',
+                animation: `counterCCW ${outerPeriod}s linear infinite`,
+                animationDelay: `${delay}s`,
+              }}>
+                <OrbCard card={card} />
+              </div>
+            </div>
+          )
+        })}
+
+        {/* ── Center text ── */}
+        <div style={{
+          position: 'relative', zIndex: 10,
+          textAlign: 'center',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0,
+          animation: 'heroFadeIn 0.8s ease 0.2s both',
+        }}>
+          {/* Brand logo mark */}
+          <div style={{
+            width: 52, height: 52, borderRadius: 14,
+            background: 'rgba(99,102,241,0.18)',
+            border: '1px solid rgba(99,102,241,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 24,
+          }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#A5B4FC' }}>B</span>
+          </div>
+
+          {/* Main headline */}
+          <h1 style={{
+            margin: 0,
+            fontSize: 'clamp(3.2rem, 7vw, 6.5rem)',
+            fontWeight: 900,
+            letterSpacing: '-0.035em',
+            lineHeight: 1,
+            color: '#fff',
+          }}>
+            bite<span style={{
+              background: 'linear-gradient(135deg, #A5B4FC 0%, #818CF8 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>speed</span>
+          </h1>
+
+          {/* Tagline */}
+          <p style={{
+            margin: '20px 0 0',
+            fontSize: 'clamp(1rem, 2vw, 1.3rem)',
+            color: 'rgba(255,255,255,0.48)',
+            fontWeight: 400,
+            letterSpacing: '0.01em',
+            maxWidth: 400,
+            lineHeight: 1.5,
+          }}>
+            It all starts with the conversation.
+          </p>
+
+          {/* CTA */}
+          <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            <Link href="/login" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              padding: '15px 40px',
+              borderRadius: 100,
+              background: V,
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 16,
+              textDecoration: 'none',
+              transition: 'all 0.22s ease',
+              boxShadow: `0 8px 32px ${V}55`,
+              letterSpacing: '-0.01em',
+            }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.background = VD
+                el.style.transform = 'translateY(-2px)'
+                el.style.boxShadow = `0 12px 40px ${V}70`
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.background = V
+                el.style.transform = 'translateY(0)'
+                el.style.boxShadow = `0 8px 32px ${V}55`
+              }}
+            >
+              ✦ Open Dashboard →
+            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              {['Finance team', 'Brand POCs', 'Internal only'].map(label => (
+                <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
+                  <span style={{ color: '#4ade80', fontSize: 10 }}>✓</span> {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll cue */}
+        <div style={{
+          position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+          color: 'rgba(255,255,255,0.2)',
+        }}>
+          <div style={{ width: 1, height: 36, background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.2))' }} />
+          <span style={{ fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Scroll</span>
+        </div>
+      </section>
+
+      {/* ── Brand logos ticker ──────────────────────────────────────────── */}
+      <section style={{ background: '#FAFAFA', borderBottom: '1px solid #F0F0F0', padding: '18px 0', overflow: 'hidden' }}>
+        <div style={{ display: 'flex' }}>
+          {[0, 1].map(pass => (
+            <div key={pass} style={{
+              display: 'flex', alignItems: 'center', gap: '2.5rem', flexShrink: 0,
+              animation: 'marquee 26s linear infinite', paddingRight: '2.5rem',
+            }}>
+              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#D1D5DB', whiteSpace: 'nowrap' }}>
+                Brands on BitSpeed
+              </span>
+              {brandLogos.map(b => (
+                <span key={b} style={{ fontSize: 13, fontWeight: 600, color: '#B0B8C8', whiteSpace: 'nowrap' }}>{b}</span>
+              ))}
+            </div>
+          ))}
+        </div>
+        <style>{`@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }`}</style>
+      </section>
+
+      {/* ── Pain points ────────────────────────────────────────────────── */}
+      <section style={{ padding: '80px 0', background: '#fff' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px' }}>
+          <FadeIn>
+            <div style={{ textAlign: 'center', marginBottom: 48 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#EF4444', marginBottom: 12 }}>The old way</p>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, letterSpacing: '-0.025em', color: '#111', marginBottom: 12 }}>
+                Finance ops should not look like this.
+              </h2>
+            </div>
+          </FadeIn>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+            {[
+              { icon: '🗂️', text: 'Invoices scattered across emails' },
+              { icon: '📊', text: 'Reconciliation done in spreadsheets' },
+              { icon: '📞', text: 'Payment follow-ups via WhatsApp' },
+              { icon: '⏰', text: 'Aging reports built manually every week' },
+              { icon: '🚫', text: "No visibility on churn risk until it is too late" },
+            ].map((p, i) => (
+              <FadeIn key={i} delay={i * 0.06}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', background: '#FEF2F2', border: '1px solid #FEE2E2', borderRadius: 12, fontSize: 14, color: '#374151' }}>
+                  <span style={{ fontSize: 18 }}>{p.icon}</span>
+                  <span>{p.text}</span>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+          <FadeIn delay={0.4}>
+            <div style={{ textAlign: 'center', marginTop: 40 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: V }}>
+                <ChevronRight size={18} />
+                BitSpeed Finance replaces all of this — with one dashboard.
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ── How it works ───────────────────────────────────────────────── */}
+      <section id="how-it-works" style={{ padding: '92px 0', background: '#FAFAFA', borderTop: '1px solid #F0F0F0' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px' }}>
+          <FadeIn>
+            <div style={{ marginBottom: 52 }}>
+              <Pill>Step by step</Pill>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, letterSpacing: '-0.025em', marginTop: 16, marginBottom: 10 }}>How billing works — end to end</h2>
+              <p style={{ fontSize: 15, color: '#6B7280', maxWidth: 480 }}>Every brand goes through this exact cycle, from onboarding to reconciliation.</p>
+            </div>
+          </FadeIn>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {steps.map((step, i) => <FadeIn key={step.n} delay={i * 0.07}><StepCard step={step} /></FadeIn>)}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Payment models ─────────────────────────────────────────────── */}
+      <section id="payment-models" style={{ padding: '92px 0', background: VLL, borderTop: '1px solid #DDE3FF' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px' }}>
+          <FadeIn>
+            <div style={{ marginBottom: 52 }}>
+              <Pill>Payment models</Pill>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, letterSpacing: '-0.025em', marginTop: 16, marginBottom: 10 }}>Three ways brands pay</h2>
+              <p style={{ fontSize: 15, color: '#6B7280', maxWidth: 480 }}>Each brand picks a model at onboarding. Finance configures the credit cycle accordingly.</p>
+            </div>
+          </FadeIn>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            {paymentModels.map((pm, i) => <FadeIn key={pm.model} delay={i * 0.09}><ModelCard pm={pm} /></FadeIn>)}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features ───────────────────────────────────────────────────── */}
+      <section id="features" style={{ padding: '92px 0' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px' }}>
+          <FadeIn>
+            <div style={{ marginBottom: 52 }}>
+              <Pill>Platform features</Pill>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, letterSpacing: '-0.025em', marginTop: 16, marginBottom: 10 }}>Everything finance needs. Nothing it does not.</h2>
+              <p style={{ fontSize: 15, color: '#6B7280', maxWidth: 480 }}>Built specifically for the BitSpeed finance team — every feature earns its place.</p>
+            </div>
+          </FadeIn>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {features.map((f, i) => <FadeIn key={f.title} delay={i * 0.07}><FeatureCard f={f} /></FadeIn>)}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Policies ───────────────────────────────────────────────────── */}
+      <section style={{ padding: '92px 0', background: '#FAFAFA', borderTop: '1px solid #F0F0F0' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px' }}>
+          <FadeIn>
+            <div style={{ marginBottom: 52 }}>
+              <Pill color="#374151">Policies</Pill>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, letterSpacing: '-0.025em', marginTop: 16, marginBottom: 10 }}>The rules, clearly stated.</h2>
+              <p style={{ fontSize: 15, color: '#6B7280', maxWidth: 480 }}>No ambiguity. Every brand and the finance team knows exactly what happens and when.</p>
+            </div>
+          </FadeIn>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {policies.map((p, i) => <FadeIn key={p.title} delay={i * 0.09}><PolicyCard p={p} /></FadeIn>)}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ────────────────────────────────────────────────────────── */}
+      <section style={{
+        background: `linear-gradient(135deg, ${N} 0%, #1d2560 50%, ${VD} 100%)`,
+        padding: '100px 0', position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.28) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <FadeIn>
+          <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+            <Pill color="#A5B4FC">Get started</Pill>
+            <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 800, color: '#fff', letterSpacing: '-0.025em', margin: '20px 0 16px', lineHeight: 1.1 }}>
+              Ready to manage finance<br />at speed?
+            </h2>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', maxWidth: 400, margin: '0 auto 40px' }}>
+              Log in to manage invoices, payments, reconciliation, AR aging, and brand accounts — all in one place.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <ArrowBtn href="/login" variant="dark">Open Finance Dashboard</ArrowBtn>
+              <ArrowBtn href="#how-it-works" variant="outline">Learn more</ArrowBtn>
+            </div>
+          </div>
+        </FadeIn>
+      </section>
+
+      {/* ── Footer ─────────────────────────────────────────────────────── */}
+      <footer style={{ background: N }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 10, fontWeight: 900, color: '#fff' }}>B</span>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 500, color: '#fff' }}>
+              bite<strong>speed</strong>
+              <span style={{ marginLeft: 6, color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>Finance</span>
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <Link href="/login" style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Sign in</Link>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>© {new Date().getFullYear()} BitSpeed · Internal use only</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+function StepCard({ step }: { step: typeof steps[0] }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{
+      background: '#fff', border: `1px solid ${hov ? '#C7D2FE' : '#EDEDED'}`,
+      borderRadius: 16, padding: '26px 22px',
+      transition: 'all 0.25s ease',
+      transform: hov ? 'translateY(-4px)' : 'translateY(0)',
+      boxShadow: hov ? '0 12px 36px rgba(99,102,241,0.1)' : '0 1px 3px rgba(0,0,0,0.04)',
+      cursor: 'default',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
+        <span style={{ fontSize: 11, fontWeight: 800, color: '#E0E0E0', letterSpacing: '0.06em' }}>{step.n}</span>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: hov ? V : VLL, color: hov ? '#fff' : V, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.25s ease' }}>
+          {step.icon}
+        </div>
+      </div>
+      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 8, letterSpacing: '-0.01em' }}>{step.title}</h3>
+      <p style={{ fontSize: 12, lineHeight: 1.65, color: '#9CA3AF' }}>{step.desc}</p>
+    </div>
+  )
+}
+
+function ModelCard({ pm }: { pm: typeof paymentModels[0] }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{
+      background: '#fff', border: '1px solid #E0E7FF', borderRadius: 16, overflow: 'hidden',
+      transition: 'all 0.25s ease',
+      transform: hov ? 'translateY(-4px)' : 'translateY(0)',
+      boxShadow: hov ? `0 16px 48px ${pm.color}22` : '0 2px 6px rgba(0,0,0,0.04)',
+    }}>
+      <div style={{ height: 3, background: pm.color }} />
+      <div style={{ padding: '26px 22px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: pm.color + '15', color: pm.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {pm.icon}
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{pm.model}</p>
+            <p style={{ fontSize: 11, color: '#9CA3AF' }}>{pm.tag}</p>
+          </div>
+        </div>
+        <p style={{ fontSize: 13, lineHeight: 1.65, color: '#6B7280', marginBottom: 20 }}>{pm.description}</p>
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, padding: 0, margin: 0 }}>
+          {pm.highlights.map(h => (
+            <li key={h} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: '#374151' }}>
+              <CheckCircle2 size={12} style={{ color: pm.color, flexShrink: 0 }} />
+              {h}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+function FeatureCard({ f }: { f: typeof features[0] }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{
+      background: hov ? VLL : '#fff',
+      border: `1px solid ${hov ? '#C7D2FE' : '#EDEDED'}`,
+      borderRadius: 16, padding: '26px 22px',
+      transition: 'all 0.25s ease', cursor: 'default',
+    }}>
+      <div style={{ width: 38, height: 38, borderRadius: 10, background: hov ? V : VLL, color: hov ? '#fff' : V, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.25s ease', marginBottom: 16 }}>
+        {f.icon}
+      </div>
+      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 6, letterSpacing: '-0.01em' }}>{f.title}</h3>
+      <p style={{ fontSize: 12, lineHeight: 1.65, color: '#9CA3AF' }}>{f.desc}</p>
+    </div>
+  )
+}
+
+function PolicyCard({ p }: { p: typeof policies[0] }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #EDEDED', borderRadius: 16, padding: '26px 22px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: p.bg, color: p.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {p.icon}
+        </div>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#111' }}>{p.title}</h3>
+      </div>
+      <p style={{ fontSize: 12, lineHeight: 1.7, color: '#9CA3AF' }}>{p.body}</p>
+    </div>
   )
 }
