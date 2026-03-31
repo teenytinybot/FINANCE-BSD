@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/session'
 import { getMetrics, invoices, payments, formatINR, getBrandPlan, brandPlans, brandUsers, extensionRequests } from '@/lib/mock-data'
 import { getSubmissions, getResolution } from '@/lib/extension-store'
 import { TrendingUp, Clock, AlertTriangle, IndianRupee, FileText, CreditCard, Wallet, Plus, ArrowRight, CheckCircle2 } from 'lucide-react'
@@ -356,7 +358,8 @@ function BrandOverview({ brand, name, received, outstanding, overdue, recentInvo
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default async function DashboardPage() {
-  const session: import('@/lib/session').Session = { role: 'finance', name: 'Finance Team' }
+  const session = await getSession()
+  if (!session) redirect('/login')
   const brand   = session?.role === 'brand' ? session.brand : undefined
   const isBrand = !!brand
 

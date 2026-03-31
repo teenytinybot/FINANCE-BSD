@@ -37,7 +37,7 @@ export async function login(prevState: { error: string } | null, formData: FormD
     maxAge: 60 * 60 * 8,
   })
 
-  redirect(session.role === 'brand' ? '/dashboard/brand-view' : '/dashboard')
+  redirect('/dashboard')
 }
 
 export async function logout() {
