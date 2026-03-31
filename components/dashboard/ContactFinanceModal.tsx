@@ -56,6 +56,18 @@ export default function ContactFinanceModal() {
             ) : (
               <form ref={formRef} action={action} className="space-y-4">
                 <div>
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text)' }}>To</label>
+                  <input
+                    type="email"
+                    name="to"
+                    required
+                    placeholder="e.g. finance@bitespeed.co"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm transition-all"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                  />
+                </div>
+
+                <div>
                   <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text)' }}>Subject</label>
                   <input
                     type="text"

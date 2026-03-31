@@ -9,15 +9,17 @@ export async function sendContactEmail(prevState: { success?: boolean; error?: s
   const session = await getSession()
   if (!session || session.role !== 'brand') return { error: 'Unauthorized' }
 
+  const to      = formData.get('to')?.toString().trim() ?? ''
   const subject = formData.get('subject')?.toString().trim() ?? ''
   const message = formData.get('message')?.toString().trim() ?? ''
 
-  if (!subject || !message) return { error: 'Please fill in all fields.' }
+  if (!to || !subject || !message) return { error: 'Please fill in all fields.' }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { error: 'Please enter a valid email address.' }
 
   try {
     await resend.emails.send({
       from: 'BitSpeed Finance Portal <onboarding@resend.dev>',
-      to: 'finance@bitespeed.co',
+      to,
       replyTo: session.brand ?? undefined,
       subject: `[${session.brand}] ${subject}`,
       html: `
